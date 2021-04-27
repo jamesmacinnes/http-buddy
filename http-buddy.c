@@ -1,5 +1,7 @@
 /******************************************************************************
-http-server.c - Simple Multi-threaded Caching Webserver
+Copyright (C) 2021 Paisley Buddy Software (http://paisleybuddy.com)
+
+http-server.c - Multi-threaded Caching Webserver
 
 Demonstrates a simple multi-threaded non-blocking caching web server. 
 
@@ -14,7 +16,8 @@ Usage:
 
 To build, type "make".
 
-See: <URL> for more information on this code.
+See: https://paisleybuddy.com/blog/nonblocking-http-server-in-c
+ for more information on this code.
 
 *****************************************************************************/
   /* Enbles thread safe versions of standard C functions. */
@@ -416,8 +419,9 @@ void readRequest(httpRequestResponsePtr request) {
     mesg[request->readBuffer->bytesRead] = 0;
 
       // Move to next State
-    if(strnstr(request->readBuffer->initialBuffer, "\r\n\r\n", request->readBuffer->bytesRead) != 0 || 
-        strnstr(request->readBuffer->initialBuffer, "\n\n", request->readBuffer->bytesRead) != 0) {
+    if(strnstr(request->readBuffer->initialBuffer, 
+      "\r\n\r\n", request->readBuffer->bytesRead) != 0)
+    {
       request->readBuffer->bytesToRead = 0;
       identifyResource(request);
     }
@@ -572,7 +576,7 @@ void identifyResource(httpRequestResponsePtr request) {
  sendResponse() - Handles the http request/response.
 
  States:
-  Input: STATE_IDENTIFYING
+  Input: STATE_IDENTIFYING, STATE_SEND
   Output: STATE_SEND, STATE_COMPLETE, STATE_ERROR
 
  *****************************************************************************/
