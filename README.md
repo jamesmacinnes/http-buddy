@@ -5,7 +5,7 @@
 ### Usage:
 
 ```
-./http-server [-p PORT -t Threads -c Connections -l LogLevel -r RootDir]
+./http-buddy [-p PORT -t Threads -c Connections -l LogLevel -r RootDir]
 
 -p PORT: Port number to listen on, default 10000
 -t Threads: Number of threads to run, default 1000
