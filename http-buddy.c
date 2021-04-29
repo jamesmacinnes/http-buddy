@@ -116,7 +116,7 @@ struct httpRequest {
 static Hashtable pages;
 
   /* The logging level. */
-int logLevel = LOG_WARN;
+int logLevel = LOG_INFO;
 
 typedef struct httpReadBufferStruct {
   char initialBuffer[MAXPAYLOAD];
@@ -706,7 +706,6 @@ int main(int argc, char* argv[]) {
         maxConnections = atoi(optarg);
         break;
       case '?':
-        fprintf(stderr, "Wrong arguments given!!!\n");
         printUsage(argv[0]);
         exit(1);
       default:
@@ -731,42 +730,27 @@ int main(int argc, char* argv[]) {
     "\033[92m",rootDir,"\033[0m");
   logMessage(LOG_INFO, buffer, 0);
 
-  fcntl(listenfd, F_SETFL, fcntl(listenfd, F_GETFL) | O_NONBLOCK);
-
-  struct epoll_event ev, events[CONNMAX];
-  int nfds;
-
-  int epollfd = epoll_create1(0);
-
-  ev.events = EPOLLIN;
-  ev.data.fd = listenfd;
-  epoll_ctl(epollfd, EPOLL_CTL_ADD, listenfd, &ev);
+  struct epoll_event ev;
   int pollSlot = 0;
 
   while (1) {
-    nfds = epoll_wait(epollfd, events, CONNMAX, -1);
+    addrlen = sizeof(clientaddr);
+    httpRRArray[slot].socket = accept(listenfd, (struct sockaddr *) 
+      &clientaddr, &addrlen);
 
-    for(int i=0; i < nfds; i++) {
-      if(events[i].data.fd == listenfd) {
-        addrlen = sizeof(clientaddr);
-        httpRRArray[slot].socket = accept(listenfd, (struct sockaddr *) 
-          &clientaddr, &addrlen);
-
-        if (httpRRArray[slot].socket < 0) {
-          if(errno != EAGAIN)
-            logMessage(LOG_ERROR, strerror(httpRRArray[slot].socket), 0);
-        }
-        else {
-          httpRRArray[slot].state = STATE_CONNECT;
-          fcntl(httpRRArray[slot].socket, F_SETFL, 
-            fcntl(httpRRArray[slot].socket, F_GETFL) | O_NONBLOCK);
-          ev.events = EPOLLIN | EPOLLOUT;
-          ev.data.fd = slot;
-          epoll_ctl(socketEpoll[pollSlot], EPOLL_CTL_ADD, 
-            httpRRArray[slot].socket, &ev);
-          pollSlot = (pollSlot + 1) % maxThreads;
-        }
-      }
+    if (httpRRArray[slot].socket < 0) {
+      if(errno != EAGAIN)
+        logMessage(LOG_ERROR, strerror(httpRRArray[slot].socket), 0);
+    }
+    else {
+      httpRRArray[slot].state = STATE_CONNECT;
+      fcntl(httpRRArray[slot].socket, F_SETFL, 
+        fcntl(httpRRArray[slot].socket, F_GETFL) | O_NONBLOCK);
+      ev.events = EPOLLIN | EPOLLOUT | EPOLLET;
+      ev.data.fd = slot;
+      epoll_ctl(socketEpoll[pollSlot], EPOLL_CTL_ADD, 
+        httpRRArray[slot].socket, &ev);
+      pollSlot = (pollSlot + 1) % maxThreads;
     }
       /* Loop around the httpRRArray array until a -1 is found. */
     while (httpRRArray[slot].socket != -1) slot = (slot + 1) % maxConnections;
