@@ -1,16 +1,16 @@
 /******************************************************************************
 Copyright (C) 2021 Paisley Buddy Software (http://paisleybuddy.com)
 
-http-server.c - Multi-threaded Caching Webserver
+http-buddy.c - Multi-threaded Caching Webserver
 
 Demonstrates a simple multi-threaded non-blocking caching web server. 
 
 Usage:
 
-./http-server [-p PORT -t Threads -c Connections -l LogLevel -r RootDir]
+./http-buddy [-p PORT -t Threads -c Connections -l LogLevel -r RootDir]
 
 -p PORT: Port number to listen on, default 10000
--t Threads: Number of threads to run, default 1000
+-t Threads: Number of threads to run, default 4
 -c Connections: Number of concurrent connections, default 1000
 -r RootDir: Document root for server, default current working directory
 
@@ -656,14 +656,14 @@ void logMessage(int severity, char *string, int socket) {
  *****************************************************************************/
 void printUsage(char *prog) {
   fprintf(stderr,
-    "%s [-p PORT -t Threads -c Connections -l LogLevel -r RootDir]\n"
-    " -p PORT: Port number to listen on, default 10000\n"
-    " -t Threads: Number of threads to run, default 1000\n"
-    " -c Connections: Number of concurrent connections, default 1000\n"
-    " -l LogLevel: 0 = off, 1 = WARN, 2 = INFO (full)\n"
-    " -r RootDir: Document root for server, default current working "
+    "\n%s [-p PORT -t Threads -c Connections -l LogLevel -r RootDir]\n"
+    "  -p PORT: Port number to listen on, default %s\n"
+    "  -t Threads: Number of threads to run, default %ld\n"
+    "  -c Connections: Number of concurrent connections, default %ld\n"
+    "  -l LogLevel: 0 = off, 1 = WARN, 2 = INFO (full)\n"
+    "  -r RootDir: Document root for server, default current working "
       "directory\n\n",
-    prog);
+    prog, serverPort, maxThreads,maxConnections);
 }
 
 /******************************************************************************
