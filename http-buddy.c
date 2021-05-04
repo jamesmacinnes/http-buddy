@@ -43,9 +43,6 @@ See: https://paisleybuddy.com/blog/nonblocking-http-server-in-c
   /* Default max connections. */
 #define CONNMAX 1000
 
-  /* File Read Buffer size. */
-#define BYTES 10240
-
   /* Files larger than this will not be cached and will be rejected by
   the webserver if requested. */
 #define MAXFILESIZE 512000000
@@ -118,6 +115,7 @@ static Hashtable pages;
   /* The logging level. */
 int logLevel = LOG_INFO;
 
+  /* Structures for managing the read/write buffers and request state. */
 typedef struct httpReadBufferStruct {
   char initialBuffer[MAXPAYLOAD];
   int bytesRead;
@@ -444,7 +442,6 @@ void identifyResource(httpRequestResponsePtr request) {
   char *reqline[3];
   char path[2048];
   char logBuffer[4096];
-  char data_to_send[BYTES];
   int fd, bytesRead;
 
   request->state = STATE_INDENTIFY;
@@ -538,22 +535,17 @@ void identifyResource(httpRequestResponsePtr request) {
           sendResponse(request);
           close(fd);
         } else { /* Have file lock and is uncached. */
-
           char *buffer;
           buffer = malloc(filesize);
-          long size = 0;
 
             /* Load the file into a buffer then add to hash. */
-          while((bytesRead=read(fd, data_to_send, BYTES)) > 0) {
-              memcpy(buffer+size, data_to_send, bytesRead);
-              size += bytesRead;
-          }
-          toHash(pages, path, buffer, size);
+          bytesRead=read(fd, buffer, filesize);
+          toHash(pages, path, buffer, bytesRead);
           close(fd);
 
           send(request->socket, "HTTP/1.0 200 OK\n\n", 17, 0);
           request->writeBuffer->data = buffer;
-          request->writeBuffer->size = size;
+          request->writeBuffer->size = bytesRead;
           request->writeBuffer->bytesWritten = 0;
           
           sendResponse(request);
